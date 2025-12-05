@@ -1,0 +1,80 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String?
+  email     String   @unique
+  password  String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+
+  rfps      Rfp[]
+}
+
+model Vendor {
+  id        Int      @id @default(autoincrement())
+  vendorName   String
+  contactEmail String?
+  contactPhone String?
+  createdAt DateTime @default(now())
+
+  proposals VendorResponse[]
+  mappings  VendorRfpMapping[]
+}
+
+model Rfp {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  category    String?
+  status      String   @default("draft")
+  createdBy   Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  user          User?              @relation(fields: [createdBy], references: [id])
+  documents     RfpDocument[]
+  responses     VendorResponse[]
+  vendorMapping VendorRfpMapping[]
+}
+
+model RfpDocument {
+  id                Int      @id @default(autoincrement())
+  rfpId             Int
+  fileName          String?
+  filePath          String
+  contentExtracted  String?
+  createdAt         DateTime @default(now())
+
+  rfp Rfp @relation(fields: [rfpId], references: [id])
+}
+
+model VendorRfpMapping {
+  id        Int      @id @default(autoincrement())
+  rfpId     Int
+  vendorId  Int
+  sentAt    DateTime @default(now())
+  status    String   @default("pending")
+
+  rfp    Rfp    @relation(fields: [rfpId], references: [id])
+  vendor Vendor @relation(fields: [vendorId], references: [id])
+}
+
+model VendorResponse {
+  id         Int      @id @default(autoincrement())
+  rfpId      Int
+  vendorId   Int
+  responseText String?
+  scoreJson    Json?
+  submittedAt  DateTime @default(now())
+
+  rfp    Rfp    @relation(fields: [rfpId], references: [id])
+  vendor Vendor @relation(fields: [vendorId], references: [id])
+}
