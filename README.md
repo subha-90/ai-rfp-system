@@ -1,38 +1,173 @@
-# AI-Powered RFP Management System
+AI-Powered RFP Management System
 
-This project is a single-user web application designed to streamline the end-to-end procurement workflow using AI. It allows users to create structured RFPs from natural language, send them to vendors via email, automatically parse vendor responses using AI, and compare proposals with intelligent recommendations.
+A full-stack web application that automates the procurement RFP lifecycle using AI.
+Users can create RFPs, manage vendors, upload RFP documents, receive vendor proposals, and evaluate them using AI-driven scoring.
 
----
+This project demonstrates practical use of AI in enterprise procurement workflows.
 
-## 🚀 Features
+✅ What This App Does
+1️⃣ Create RFPs
 
-### 1. RFP Creation (AI-Powered)
-- Write RFP requirements in natural language.
-- Automatically convert text into structured RFP JSON using AI.
-- View and reuse structured data across the workflow.
+Create RFPs using a simple form
 
-### 2. Vendor Management
-- Maintain vendor master data (name, email, category).
-- Select vendors when sending an RFP.
+Add title, description, and category
 
-### 3. Email Integration
-- Send RFPs to vendors via SMTP email.
-- Receive vendor responses using IMAP polling.
+Upload supporting RFP documents (PDF / DOCX)
 
-### 4. Automatic Proposal Parsing
-- Uses AI to extract:
-  - Pricing
-  - Delivery timelines
-  - Warranty
-  - Payment terms
-  - Item-wise pricing
+2️⃣ Vendor Management
 
-### 5. Vendor Comparison & Recommendation
-- Compare proposals visually.
-- AI-generated vendor scoring and recommendations.
-- Decision explanation provided for transparency.
+Add and manage vendors
 
----
+Store vendor contact details
 
-## 🧱 Architecture
+Use vendors when sending RFPs
 
+3️⃣ Document Upload & Processing
+
+Upload RFP documents
+
+Backend extracts and stores document content
+
+Documents are linked to an RFP
+
+4️⃣ Proposal Handling (Backend Ready)
+
+Infrastructure to receive vendor proposals
+
+Proposals are parsed into structured data
+
+Designed for email or API-based ingestion
+
+5️⃣ AI-Based Evaluation
+
+Vendor proposals can be evaluated using AI
+
+Scores vendors based on:
+
+Price
+
+Delivery time
+
+Warranty
+
+Payment terms
+
+Provides recommendation and score per vendor
+
+🧠 Tech Stack
+Frontend
+
+React (Vite)
+
+Tailwind CSS
+
+React Router
+
+Backend
+
+Node.js
+
+Express.js
+
+Prisma ORM
+
+PostgreSQL
+
+AI
+
+OpenAI API (can be replaced with local LLMs like Ollama)
+
+File Handling
+
+Multer (file uploads)
+
+PDF / DOCX parsing
+
+📁 Project Structure
+ai-rfp-system/
+├── backend/
+│   ├── src/
+│   │   ├── controllers
+│   │   ├── routes
+│   │   ├── services
+│   │   ├── config
+│   │   └── middleware
+│   └── prisma/
+│
+├── frontend/
+│   ├── src/
+│   │   ├── pages
+│   │   ├── components
+│   │   └── api.js
+│
+└── README.md
+
+▶️ How to Run the Project
+1️⃣ Backend Setup
+cd backend
+npm install
+
+
+Create .env file:
+
+DATABASE_URL=postgresql://user:password@localhost:5432/rfp_db
+OPENAI_API_KEY=your_api_key
+
+
+Run database migrations:
+
+npx prisma migrate dev
+
+
+Start backend:
+
+npm run start
+
+
+Backend runs on:
+
+http://localhost:4000
+
+2️⃣ Frontend Setup
+cd frontend
+npm install
+npm run dev
+
+
+Frontend runs on:
+
+http://localhost:5173
+
+🧪 How to Use the App
+
+Open the frontend in browser
+
+Create a new RFP
+
+Upload an RFP document (optional)
+
+Add vendors
+
+View RFP details
+
+Evaluate vendor proposals (AI scoring)
+
+⚠️ Notes
+
+The app is designed for single-user / admin workflows
+
+Email-based proposal ingestion and scheduled polling are backend-ready but optional
+
+AI providers can be swapped (OpenAI → Ollama / local LLM)
+
+🎯 Why This Project
+
+This project focuses on:
+
+Real-world enterprise workflows
+
+Clean backend architecture
+
+Practical AI integration
+
+Production-ready frontend
