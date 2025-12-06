@@ -9,17 +9,24 @@ export default function RfpDetail() {
   const [vendors, setVendors] = useState([]);
   const [selectedVendorIds, setSelectedVendorIds] = useState([]);
   const [proposals, setProposals] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Load RFP & Vendors
+  useEffect(() => {
+    loadRfp();
+    loadVendors();
+  }, [id]);
 
   const loadRfp = async () => {
     const res = await api.get(`/rfps/${id}`);
     setRfp(res.data);
-    setProposals(res.data.responses || []);
+    setProposals(res.data.proposals || []);
   };
 
-  useEffect(() => {
-    loadRfp();
-    api.get("/vendors").then((res) => setVendors(res.data));
-  }, []);
+  const loadVendors = async () => {
+    const res = await api.get("/vendors");
+    setVendors(res.data);
+  };
 
   const toggleVendor = (vendorId) => {
     setSelectedVendorIds((prev) =>
@@ -30,102 +37,142 @@ export default function RfpDetail() {
   };
 
   const handleSendRfp = async () => {
-    if (selectedVendorIds.length === 0)
-      return alert("Select at least one vendor");
+    if (!selectedVendorIds.length) {
+      alert("Please select at least one vendor");
+      return;
+    }
 
-    await api.post("/proposals/send", {
-      rfpId: Number(id),
-      vendorIds: selectedVendorIds
-    });
+    try {
+      setLoading(true);
 
-    alert("RFP sent to selected vendors!");
+      await api.post("/proposals/send", {
+        rfpId: Number(id),
+        vendorIds: selectedVendorIds,
+      });
+
+      alert("✅ RFP sent to selected vendors");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to send RFP");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEvaluate = async () => {
-    const res = await api.post(`/rfps/${id}/evaluate`);
-    setProposals(res.data);
+    try {
+      setLoading(true);
+      const res = await api.post(`/rfps/${id}/evaluate`);
+      setProposals(res.data);
+    } catch (error) {
+      console.error(error);
+      alert("AI evaluation failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (!rfp) return <div>Loading...</div>;
+  if (!rfp) return <p className="p-6">Loading...</p>;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-10">
-
-      <h1 className="text-4xl font-bold">{rfp.title}</h1>
-
-      {/* STRUCTURED JSON */}
-      <div className="bg-white shadow p-5 rounded">
-        <h2 className="text-xl font-semibold mb-2">Structured RFP</h2>
-        <pre className="bg-gray-100 p-4 rounded overflow-auto text-sm">
-          {JSON.stringify(rfp.structuredJson, null, 2)}
-        </pre>
+    <div className="max-w-5xl mx-auto p-6 space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold">{rfp.title}</h1>
+        <p className="text-gray-600 mt-1">{rfp.description}</p>
       </div>
 
-      {/* SEND RFP */}
-      <div className="bg-white shadow p-5 rounded">
-        <h2 className="text-xl font-semibold mb-4">Send RFP to Vendors</h2>
+      {/* Structured RFP */}
+      {rfp.structuredJson && (
+        <div className="bg-white rounded-xl shadow p-5">
+          <h2 className="text-xl font-semibold mb-3">📄 Structured RFP</h2>
+          <pre className="bg-gray-50 p-4 rounded text-sm overflow-auto">
+            {JSON.stringify(rfp.structuredJson, null, 2)}
+          </pre>
+        </div>
+      )}
 
-        <div className="space-y-2">
+      {/* Send RFP */}
+      <div className="bg-white rounded-xl shadow p-5">
+        <h2 className="text-xl font-semibold mb-4">
+          📤 Send RFP to Vendors
+        </h2>
+
+        <div className="grid md:grid-cols-2 gap-3">
           {vendors.map((v) => (
-            <label key={v.id} className="flex items-center gap-3">
+            <label
+              key={v.id}
+              className="flex items-center gap-3 border rounded-lg p-3 cursor-pointer hover:bg-indigo-50"
+            >
               <input
                 type="checkbox"
                 checked={selectedVendorIds.includes(v.id)}
                 onChange={() => toggleVendor(v.id)}
               />
-              {v.vendorName} ({v.contactEmail})
+              <div>
+                <p className="font-medium">{v.vendorName}</p>
+                <p className="text-sm text-gray-500">
+                  {v.contactEmail}
+                </p>
+              </div>
             </label>
           ))}
         </div>
 
         <button
-          className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
           onClick={handleSendRfp}
+          disabled={loading}
+          className="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-60"
         >
           Send RFP
         </button>
       </div>
 
-      {/* PROPOSALS */}
-      <div className="bg-white shadow p-5 rounded">
-        <div className="flex justify-between">
-          <h2 className="text-xl font-semibold">Vendor Proposals</h2>
+      {/* Proposals */}
+      <div className="bg-white rounded-xl shadow p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">📊 Vendor Proposals</h2>
+
           <button
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
             onClick={handleEvaluate}
+            disabled={loading}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-60"
           >
             Run AI Evaluation
           </button>
         </div>
 
         {proposals.length === 0 ? (
-          <p className="text-gray-500 mt-3">No proposals yet.</p>
+          <p className="text-gray-500">No proposals yet.</p>
         ) : (
-          <table className="w-full mt-4 border">
-            <thead>
-              <tr className="bg-gray-100 border-b">
-                <th className="p-2">Vendor</th>
+          <table className="w-full border rounded-lg overflow-hidden">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="p-2 text-left">Vendor</th>
                 <th className="p-2">Price</th>
                 <th className="p-2">Delivery</th>
-                <th className="p-2">Warranty</th>
                 <th className="p-2">Score</th>
                 <th className="p-2">Recommendation</th>
               </tr>
             </thead>
-
             <tbody>
               {proposals.map((p) => {
                 const parsed = p.parsedJson || {};
                 return (
-                  <tr key={p.id} className="border-b">
+                  <tr key={p.id} className="border-t">
                     <td className="p-2">{p.vendor?.vendorName}</td>
                     <td className="p-2">
                       {parsed.total_price} {parsed.currency}
                     </td>
-                    <td className="p-2">{parsed.delivery_days}</td>
-                    <td className="p-2">{parsed.warranty}</td>
-                    <td className="p-2">{p.scoreJson?.score ?? "-"}</td>
-                    <td className="p-2">{p.scoreJson?.recommendation ?? "-"}</td>
+                    <td className="p-2">
+                      {parsed.delivery_days} days
+                    </td>
+                    <td className="p-2 font-semibold">
+                      {p.score ?? "-"}
+                    </td>
+                    <td className="p-2">
+                      {p.recommendation ?? "-"}
+                    </td>
                   </tr>
                 );
               })}

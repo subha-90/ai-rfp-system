@@ -1,49 +1,75 @@
 import React, { useEffect, useState } from "react";
-import api from "../api";
 import { Link } from "react-router-dom";
+import api from "../api";
 
 export default function RfpList() {
   const [rfps, setRfps] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const load = async () => {
-    const res = await api.get("/rfps");
-    setRfps(res.data);
+  const loadRfps = async () => {
+    try {
+      const res = await api.get("/rfps");
+      setRfps(res.data);
+    } catch (error) {
+      console.error("Failed to load RFPs", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    load();
+    loadRfps();
   }, []);
+
+  if (loading) {
+    return <p className="p-6 text-gray-500">Loading RFPs...</p>;
+  }
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
-        📄 All RFPs
-      </h1>
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-1 flex items-center gap-2">
+          📄 All RFPs
+        </h1>
+        <p className="text-gray-600">
+          Create, review and manage procurement requests
+        </p>
+      </div>
 
+      {/* Empty state */}
       {rfps.length === 0 && (
-        <p className="text-gray-500 text-lg">No RFPs found.</p>
+        <div className="bg-white rounded-xl shadow p-6 text-center text-gray-500">
+          No RFPs created yet.
+        </div>
       )}
 
+      {/* RFP Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {rfps.map((rfp) => (
           <Link
             key={rfp.id}
             to={`/rfp/${rfp.id}`}
-            className="p-5 border rounded-xl shadow-sm bg-white hover:shadow-md transition cursor-pointer"
+            className="p-5 rounded-xl bg-white shadow hover:shadow-lg transition"
           >
-            <h2 className="text-xl font-semibold">{rfp.title}</h2>
-            <p className="text-gray-600 mt-1 line-clamp-2">
-              {rfp.description}
-            </p>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {rfp.title}
+            </h2>
 
-            <div className="mt-4">
-              <span className="text-sm text-purple-700 font-medium bg-purple-100 px-2 py-1 rounded">
+            {rfp.description && (
+              <p className="text-gray-600 mt-2 line-clamp-2">
+                {rfp.description}
+              </p>
+            )}
+
+            <div className="mt-4 flex justify-between items-center">
+              <span className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full capitalize">
                 {rfp.status}
               </span>
-            </div>
 
-            <div className="text-sm text-gray-500 mt-3">
-              Created: {new Date(rfp.createdAt).toLocaleDateString()}
+              <span className="text-xs text-gray-400">
+                {new Date(rfp.createdAt).toLocaleDateString("en-IN")}
+              </span>
             </div>
           </Link>
         ))}

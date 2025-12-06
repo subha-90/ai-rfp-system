@@ -3,60 +3,84 @@ import api from "../api";
 
 export default function Vendors() {
   const [vendors, setVendors] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [form, setForm] = useState({
     vendorName: "",
     contactEmail: "",
     contactPhone: ""
   });
 
-  const load = async () => {
-    const res = await api.get("/vendors");
-    setVendors(res.data);
-  };
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  const handleCreate = async () => {
+  const loadVendors = async () => {
     try {
-      await api.post("/vendors", form);
-      setForm({ vendorName: "", contactEmail: "", contactPhone: "" });
-      load();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to create vendor");
+      const res = await api.get("/vendors");
+      setVendors(res.data);
+    } catch (error) {
+      console.error("Failed to load vendors", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="max-w-3xl mx-auto">
-      <h2 className="text-3xl font-bold mb-6">Vendors</h2>
+  useEffect(() => {
+    loadVendors();
+  }, []);
 
-      {/* Form */}
-      <div className="bg-white p-5 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-3 gap-4">
+  const handleAddVendor = async () => {
+    if (!form.vendorName || !form.contactEmail) {
+      return alert("Vendor name and email are required");
+    }
+
+    try {
+      await api.post("/vendors", form);
+      setForm({ vendorName: "", contactEmail: "", contactPhone: "" });
+      loadVendors();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to add vendor");
+    }
+  };
+
+  if (loading) {
+    return <p className="p-6 text-gray-500">Loading vendors...</p>;
+  }
+
+  return (
+    <div className="p-6 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold mb-1 flex items-center gap-2">
+          🏢 Vendor Management
+        </h2>
+        <p className="text-gray-600">
+          Manage vendors participating in procurement
+        </p>
+      </div>
+
+      {/* Add Vendor */}
+      <div className="bg-white p-6 rounded-xl shadow mb-8">
+        <h3 className="font-semibold mb-4">Add Vendor</h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <input
-            className="border p-2 rounded"
+            className="border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
             placeholder="Vendor Name"
             value={form.vendorName}
             onChange={(e) =>
               setForm({ ...form, vendorName: e.target.value })
             }
           />
-
           <input
-            className="border p-2 rounded"
-            placeholder="Email"
+            className="border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+            placeholder="Contact Email"
             value={form.contactEmail}
             onChange={(e) =>
               setForm({ ...form, contactEmail: e.target.value })
             }
           />
-
           <input
-            className="border p-2 rounded"
-            placeholder="Phone"
+            className="border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+            placeholder="Contact Phone"
             value={form.contactPhone}
             onChange={(e) =>
               setForm({ ...form, contactPhone: e.target.value })
@@ -65,28 +89,34 @@ export default function Vendors() {
         </div>
 
         <button
-          className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          onClick={handleCreate}
+          onClick={handleAddVendor}
+          className="mt-4 bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700"
         >
           Add Vendor
         </button>
       </div>
 
-      {/* List */}
-      <ul className="space-y-3">
-        {vendors.map((v) => (
-          <li
-            key={v.id}
-            className="p-4 bg-white rounded shadow flex justify-between"
-          >
-            <div>
-              <p className="font-semibold">{v.vendorName}</p>
-              <p className="text-sm text-gray-500">{v.contactEmail}</p>
-              <p className="text-sm text-gray-500">{v.contactPhone}</p>
+      {/* Vendor List */}
+      {vendors.length === 0 ? (
+        <div className="bg-white p-6 rounded-xl shadow text-center text-gray-500">
+          No vendors added yet.
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {vendors.map((v) => (
+            <div
+              key={v.id}
+              className="p-4 bg-white rounded-xl shadow"
+            >
+              <h4 className="font-semibold text-lg">{v.vendorName}</h4>
+              <p className="text-gray-600 text-sm">{v.contactEmail}</p>
+              {v.contactPhone && (
+                <p className="text-gray-500 text-sm">{v.contactPhone}</p>
+              )}
             </div>
-          </li>
-        ))}
-      </ul>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
